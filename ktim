@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import os
+import requests
+import sys
+import secrets
+from zipfile import ZipFile
+from configparser import ConfigParser
+
+TC_CACHE = "/tmp/ktim"
+CFG = ConfigParser()
+CFG.read(os.path.expanduser("~/.kattisrc"))
+
+def fetch_testcases(name):
+    print('Fetching Testcases...')
+
+    r = requests.get("https://{}/problems/{}/file/statement/samples.zip".format(CFG.get("kattis", "hostname"), name))
+    token = secrets.token_hex(32)
+    with open("{}/{}.zip".format(TC_CACHE, token), "wb") as f:
+        f.write(r.content)
+
+    with ZipFile("{}/{}.zip".format(TC_CACHE, token), "r") as f:
+        f.extractall("{}/{}".format(TC_CACHE, name))
+    os.remove("{}/{}.zip".format(TC_CACHE, token))
+
+def testcases(name):
+    if not os.path.exists("{}/{}".format(TC_CACHE, name)):
+        fetch_testcases(name)
+
+    for f in os.listdir("{}/{}".format(TC_CACHE, name)):
+        if f.endswith('.in'):
+            f = f[:-3]
+            yield "{}/{}/{}.in".format(TC_CACHE, name, f), "{}/{}/{}.ans".format(TC_CACHE, name, f)
+
+def main(program, name):
+    for i, (i_f, o_f) in enumerate(testcases(name)):
+        print("\nTestcase {}".format(i))
+        exit_code = os.system("timeout 5 ./{} < {} | diff {} - > /dev/null".format(program, i_f, o_f))
+        print("---PASS---" if exit_code == 0 else "---FAIL---")
+        if exit_code != 0:
+            print("\nInput:")
+            with open(i_f, "r") as f:
+                print(f.read())
+
+            print("\nOutput:")
+            os.system("timeout 5 ./{} < {}".format(program, i_f))
+
+            print("\nSolution:")
+            with open(o_f, "r") as f:
+                print(f.read())
+
+if __name__ == "__main__":
+    program = sys.argv[1]
+    name = sys.argv[2] if len(sys.argv) > 2 else os.path.splitext(os.path.basename(sys.argv[1]))[0]
+    main(program, name)
