@@ -36,7 +36,7 @@ def testcases(name):
 def main(program, name):
     for i, (i_f, o_f) in enumerate(testcases(name)):
         print("\nTestcase {}".format(i))
-        exit_code = os.system("timeout 5 ./{} < {} | diff {} - > /dev/null".format(program, i_f, o_f))
+        exit_code = os.system("timeout 2 ./{} < {} | diff {} - > /dev/null".format(program, i_f, o_f))
         print("---PASS---" if exit_code == 0 else "---FAIL---")
         if exit_code != 0:
             print("\nInput:")
@@ -44,7 +44,7 @@ def main(program, name):
                 print(f.read())
 
             print("\nOutput:")
-            os.system("timeout 5 ./{} < {}".format(program, i_f))
+            os.system("timeout 2 ./{} < {}".format(program, i_f))
 
             print("\nSolution:")
             with open(o_f, "r") as f:
