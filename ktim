@@ -12,6 +12,7 @@ CFG = ConfigParser()
 CFG.read(os.path.expanduser("~/.kattisrc"))
 
 def fetch_testcases(name):
+    os.makedirs(TC_CACHE, exist_ok=True)
     print('Fetching Testcases...')
 
     r = requests.get("https://{}/problems/{}/file/statement/samples.zip".format(CFG.get("kattis", "hostname"), name))
